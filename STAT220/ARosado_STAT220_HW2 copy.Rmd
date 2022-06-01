@@ -1,0 +1,201 @@
+---
+title: "STAT 220 HW 2"
+author: "Avery Rosado"
+date: "4/15/2021"
+output: 
+    html_document:
+      theme: cosmo
+      toc: yes
+---
+## Reading: Section 2.2, 1.4, 1.3 
+## Problems for Self-Study:
+* Exercise 2.23 on p.70, Exercise 1.13, 1.15, 1.17, 1.23, 1.25, 1.27 on p.29-31, and Exercise 1.37 on p.36
+* Nb. Answers can be found at the end of the book.
+* Self-study problems are as important as Turn-In problems. We don’t require submission because we think you can learn from those problems by doing them yourself and checking the answers, without grading feedbacks. If having questions about those problems, you are welcome to ask the instructors or CAs.
+
+# PROBLEMS TO TURN IN:
+
+### 1. The North Carolina births data is a random sample of 1000 birth records in the state of North Carolina in 2004. The description of variables can be viewed at https://www.openintro.org/data/index.php?data=ncbirths. We are interested in whether unmarried mothers were more likely to have low-birth-weight babies (under 2500 grams) than married mothers. The variables are marital with two levels married and not married, and lowbirthweight with two levels low and not low. We are interested in whether unmarried mothers were more likely to have low-birth-weight babies (under 2500 grams) than married mothers. The variables are marital with two levels married and not married, and lowbirthweight with two levels low and not low.
+```{R}
+c = read.table("https://www.openintro.org/stat/data/csv/ncbirths.csv",sep=",", header=T)
+```
+### There is a birth record in the data that the marital status of the mother is missing. Let’s exclude thatrecord and examine the remaining 999 records.
+```{R}
+#nc = subset(nc, is.na(marital) == FALSE)
+```
+a. 
+```{R}
+# FULL TABLE (not part of problem)
+nc <- read.table("https://www.openintro.org/stat/data/csv/ncbirths.csv",sep=",", header=TRUE)
+#(nc)
+
+# 2-way contingency table
+two_way <- table(nc$marital,nc$lowbirthweight)
+(two_way)
+```
+b.
+```{R}
+# Proportion Table
+proportionsb <- prop.table(table(nc$marital,nc$lowbirthweight))
+(proportionsb)
+#sumb1 <- 0.06106106 + 0.32532533
+sumb1 <- proportionsb[2,1] + proportionsb[2,2]
+sumb1ans <- sumb1*100
+# ANSWER pt 1
+print(paste(sumb1ans, "% is the proportion of babies born out of marriage. It is the sum of the proportions of low birth weight and not low birth weight babies born outside of marriage. Each of these proportions is the quotient of the number of babies in ech category and the total number of babies."))
+# ANSWER pt 2
+#sumb2 <- 0.04904905 + 0.06106106
+sumb2 <- proportionsb[1,1] + proportionsb[2,1]
+sumb2ans <- sumb2*100
+print(paste(sumb2ans, "% is the proportion of babies born at a low birth weight. It is the sum of babies born in and our of marriage at a low weight. Each of these proportions is the quotient of the number of babies in each category and the total number of babies."))
+```
+c. 
+```{R}
+(two_way)
+nm_ln <- 61 # not married, low not
+nm_l <- 325 # not married, low
+nm <- nm_l+nm_ln # total not married
+#Prop
+ans <- nm_l/nm
+# ANSWER:
+print(paste(ans*100, "% is the proportion of babies born outside of marriage that have a low birth weight."))
+```
+d. 
+```{R}
+table(nc$marital,nc$lowbirthweight)
+barplot(table(nc$marital,nc$lowbirthweight), main="Birthweight x Marital Status", ylab="freq",col=c("pink","turquoise"))
+legend("topleft",legend=c("married","not married"),lty=1,title="Marital Status",inset=0.04,fill=c("pink","turquoise"))
+
+```
+e.
+```{R}
+table(nc$marital,nc$lowbirthweight)
+maritalxbw <- table(nc$lowbirthweight,nc$marital)
+mosaicplot(maritalxbw,color=T)
+```
+
+f. 
+*ANSWER:* Based on the plot about, babies born outside of  a marriage are more likely to have a low birth weight.
+
+g. 
+*ANSWER:* The Marital and lowbirthweight variables are independent because row proportions change from row to row.
+
+### 2. Let’s look at the North Carolina births data again. It is known that smoking during pregnancy can cause low-birth-weight. Whether the mother is a smoker may confound the relationship between mothers’ marital status and whether the babies have low birth weights.
+
+a. The variable *habit* in the NC births data records whether the mother was a *smoker* or *nonsmoker* during pregnancy. Obtain the two-way contingency table between *marital* and *habit*. What percentage of married mothers smoked during pregnancy? How about unmarried mothers? Were married or unmarried mothers more likely to smoke during pregnancy?
+```{R}
+# 2-way contingency table between marital and habit variables
+two_way <- table(nc$marital,nc$habit)
+two_way
+#percentage of married mothers smoking during pregnancy:
+proportion <- prop.table(table(nc$marital,nc$habit))
+proportion
+marriedandsmoked <- proportion[1,2]*100
+print(paste(marriedandsmoked, "% of married mothers smoked during pregnancy"))
+# percentage of unmarried mothers smoking during pregnancy:
+unmarriedandsmoked <- proportion[2,2]*100
+print(paste(unmarriedandsmoked, "% of unmarried mothers smoked during pregnancy"))
+```
+*ANSWER (cont'd):* Married and unmarried mothers are nearly just as likely to smoke during pregnancy.
+
+b. Let’s examine the relation of marital and lowbirthweight after adjusting for mothers’ smoking habit.
+--> i. 
+```{R}
+# i.
+tab = table(nc$habit, nc$marital, nc$lowbirthweight) 
+ftable(tab)
+prop.table(ftable(tab), 1)
+```
+
+*i. ANSWER:* Babies born to nonsmoking mothers were more likely to have low birth weights if their mother was not married. 
+*ii. ANSWER:* Babies born to smoking mothers were more likely to have low birth weights if their mother was not married. 
+*iii. ANSWER:* Out-of-marriage birth corresponds with low birth weights across the habit variable (for both smoking and non-smoking mothers); it is associated with low birth weights after adjusting for mothers' smoking habit. 
+
+c. Can you claim that marriage reduces the chance of births having low birth weights?
+It can be claimed that marriage reduces the chance of births having low birth weights, or at least that it fulfills a set of circumstances that lead to a higher incidence of births that have lower birth weights. 
+
+### 3. Smokers may have more difficult time quitting smoking if they live with another smoker. A study compar- ing bupropion (an antidepressant and smoking cessation aid) with a placebo tried to take this into account in their design. The researchers first split the subjects based on whether they lived with another smoker. The subjects who live with another smoker were randomly assigned to take bupropion or a placebo, and those who didn’t live with smokers were also randomly assigned to take bupropion or a placebo. The figure below shows a flow chart of the design, when 250 of the 429 study subjects lived with nonsmokers and 179 lived with another smoker. The percentages of subjects who relapsed were then compared among the four groups: 
+
+a. *If the two groups of subjects that received bupropion had substantially lower relapse rates than the two placebo groups, can we claim that bupropion is effective as a smoking cessation aid?*
+
+*ANS a:* Yes, bupropion is effective as a smoking cessation aid because the two groups of subjects that received bupropion had substantially lower relapse rates than the two placebo groups. If this is the case, then success is not contingent on whether one lives with  a smoker or not. 
+
+b. *Has blocking been used in this study? If so, identify the blocks.*
+*ANS b:* Blocking has been used in this study; this is an experimental design that block on whether subjects live with a smoker or not. 
+
+c. *If the placebo group of subjects who lived with another smoker had a higher relapse rate than the placebo group of subjects who did not live with smokers, can we claim that living with smoker(s) makes it harder to quit smoking? Why or why not?*
+*ANS c:* Higher relapse rate among the placebo group of subjects who live with another smoker when compared with those who did not live with smoker does indicate that living with smoker(s) makes it harder to quit smoking. This result is obtained without the influence of any medicinal treatment, meaning that the results in relapse rate for any subject that is given a placebo purely stem from the effects of living conditions with or without a smoker.
+
+### 4. 
+4. The table shows results of whether the death penalty was imposed in murder trials in Florida between 1976 and 1987. 
+a. *First, consider only those cases in which the victim was white. Find the conditional proportions that got the death penalty when the defendant was white and when the defendant was black. Was a white or a black defendant more likely to receive death penalty when the victim was white?*
+```{R}
+total.whited <- 467
+total.blackd <- 48
+whitedef_whitevict_dp <- 53
+blackdef_whitevict_dp <- 11
+
+proportion_blackwhite <- whitedef_whitevict_dp/total.whited
+proportion_whitewhite <- blackdef_whitevict_dp/total.blackd
+proportion_blackwhite
+proportion_whitewhite
+print(paste(proportion_blackwhite, "is the proportion of cases in which the victim was white and the defendant was black."))
+print(paste(proportion_whitewhite, "is the proportion of cases in which the victim was white and the defendant was white."))
+```
+*ANS:* Thus, a greater proportion of white defendants receive the death penalty when the victim was white. 
+
+b. *Repeat part a for cases in which the victim was black. Was a white or a black defendant more likely to receive death penalty when the victim was black?*
+*ANS b:*
+```{R}
+total.whited <- 16
+total.blackd <- 143
+whitedef_blackvict_dp <- 0
+blackdef_blackvict_dp <- 4
+
+proportion_blackwhite <- whitedef_blackvict_dp/total.whited
+proportion_whitewhite <- blackdef_blackvict_dp/total.blackd
+proportion_blackwhite
+proportion_whitewhite
+print(paste(proportion_blackwhite, "is the proportion of cases in which the victim was black and the defendant was white"))
+print(paste(proportion_whitewhite, "is the proportion of cases in which the victim was black and the defendant was black"))
+```
+
+c. *Now add these two tables together to get a summary contingency table that describes the association between the death penalty verdict and defendant’s race, ignoring the information about the victim’s race. What proportion of white defendants received death penalty? What proportion of black defendants receive death penalty? Which proportion is higher?*
+*ANS c:*
+* White defendants: 11.0%
+* Black defendants: 7.9%
+* Thus, there is a higher proportion of white defendants that receive the death penalty. 
+d. *How can you explain the association in part (c), whereby white defendants were more likely to receive death penalty? How can this association be so different from the ones you found in part (a) and (b)?*
+*ANS d:* 
+In Florida, there is a higher likelihood of the death penalty being imposed when victims are white, per the percentages above. It is also important to note that there is a higher incidence of intra-racial crime (crime in which the races of defendant and victim is the same) than inter-racial crim (crime in which defendant and victim are of two different races). 
+
+Any race that makes a victim of a white person is more likely to receive the death penalty, per the initial observation that crimes against white victimes more frequently lead to the death penalty. Since white people are predominantly responsible for crimes against white people, they are more likely to receive the death penalty. 
+
+### 5. In each of the following situations, identify the sampling method as one of the following: simple random sampling, stratified sampling, multistage sampling, or voluntary response sampling.
+a. *There are seven sections of an introductory statistics course. A random sample of three sections is chosen and then random samples of 8 students from each of these sections are chosen.*
+--> Multistage sampling; population divided into clusters before they are dividred further into subgroups and a sample of supgroups is chosen for each selected group. 
+
+b. *An online poll asks people who visit this site to choose their favorite television show.*
+--> Volunteer random sampling
+
+c. *Separate random samples of male and female first-year college students in an introductory psychology are selected to receive a one-week alternate instructional method.*
+--> Stratified sampling; population divided into strata before a separate simple random sample is chosen within each stratum.
+
+### 6. A survey is carried out by the finance department to determine the distribution of household size in a certain city. They draw a simple random sample of 1,000 households. After several visits, the interviewers find people at home in only 653 of the sample households. Rather than face such a low response rate, the department draws a second batch of households, and uses the first 347 completed interviews in the second batch to bring the sample up to its planned strength of 1,000 households. The department counts 3,087 people in these 1,000 households, and estimates the average household size in the city to be about 3.1 persons. Is this estimate likely to be too low, too high, or about right? Why?
+*ANS:* This estimate should be too high; smaller households are more likely to not be included in the dataset because there is a lower probability that there will be anyone available to open the door to interviewers. 
+
+### 7. Suppose you are on the staff of a member of Congress who is considering a bill that would provide government-sponsored insurance for nursing-home care. You report that 1128 letters have been received on the issue, of which 871 oppose the legislation. “I’m surprised that most of my constituents oppose the bill. I thought it would be quite popular,” says the congresswoman. Are you convinced that a majority of the voters oppose the bill? How would you explain the statistical issue to the congresswoman?
+*ANS:* I am not convinced that a majority of the voters oppose the bill. It is likely that constituents that are opposed will be more outspoken and will take the time to reach out and express their opposition. Meanwhile, a quiet bulk of constituents will not reach out to express their support. Additionally, the sample being referenced is a voluntary response sample. Opposition is, in reality, much lower than the ~77.2%.  
+
+
+
+
+
+
+
+
+
+
+
+
+

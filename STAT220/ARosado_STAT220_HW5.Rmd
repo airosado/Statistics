@@ -1,0 +1,140 @@
+---
+title: "ARosado_STAT220_HW5"
+author: "Avery Rosado"
+date: "5/13/2021"
+output: html_document
+---
+## 1.)
+```{R}
+library(lattice)
+library(tidyverse)
+# summaries func
+favstats = function(mydata){
+  # input mydata is a numerical vector or matrices
+  result = rep(0, 9);
+  mysummary = summary(mydata);
+  result[1] = mysummary[1];
+  result[2] = mysummary[2];
+  result[3] = mysummary[3];
+  result[4] = mysummary[4];
+  result[5] = mysummary[5];
+  result[6] = mysummary[6];
+  result[7] = sd(mydata);
+  result[8] = length(mydata);
+  result[9] = sum(is.na(mydata)); 
+  names(result) = c("min", "Q1", "median", "mean", "Q3", "max", "sd", "n", "missing");
+  result;
+}
+```
+
+### The Ames Real Estate Data
+```{R}
+# a.
+
+download.file("http://www.openintro.org/stat/data/ames.RData", destfile = "ames.RData")
+load("ames.RData")
+# var
+area<-ames$Gr.Liv.Area # above ground living area of the house in square feet
+price<-ames$SalePrice # sale price
+# distribution of price 
+favstats(price)
+histogram(price)
+histogram(price,nint=60)
+```
+
+```{R}
+# b. 
+
+# The unknown sampling distribution
+sample<-sample(price, 2930)
+print(paste(mean(sample), "is the mean of the sale price of the population."))
+print(paste(sd(sample), "is the standard deviation of the sale price of the population."))
+# Without using the sample function to call all values of the vector
+print(paste(mean(price), "is the mean of the sale price of the population"))
+print(paste(sd(price), "is the standard deviation of the sale price of the population."))
+
+# Nb. because all the values of the vector defined by the variable PRICE are called in the initial two print functions involing line 49.   
+```
+
+```{R}
+# c.
+
+# Random sample size of 25 from variable price
+sample<-sample(price, 25)
+print(paste(mean(sample), "is the mean of the sale price of the population for the sample size 25."))
+print(paste(sd(sample), "is the standard deviation of the sale price of the population for the sample size 25."))
+```
+```{R}
+# d.
+
+# Sampling distribution for the sample mean 
+sample_means25<-as.data.frame(replicate(5000,mean(sample(price,25))))
+names(sample_means25)<-"mean"
+head(sample_means25)
+```
+```{R}
+# d.
+
+# Sampling distribution for the sample mean 
+sample_means4<-as.data.frame(replicate(5000,mean(sample(price,4))))
+names(sample_means4)<-"mean"
+head(sample_means4)
+```
+```{R}
+# f.
+
+# Sampling distribution for the sample mean 
+sample_means100<-as.data.frame(replicate(5000,mean(sample(price,100))))
+names(sample_means100)<-"mean"
+head(sample_means100)
+```
+
+```{R}
+# g.
+
+hist(sample_means25$mean,breaks=60,xlab="Mean",col=c(4))
+x<-seq(130000,270000,by=10)
+y<-dnorm(x,mean(sample_means25$means),sd(sample_means25$mean))
+lines(x,y)
+hist(sample_means4$mean,breaks=60,xlab="Mean",col=c(2))
+x<-seq(90000,410000,10);
+y<-dnorm(x,mean(sample_means4$means),sd(sample_means4$mean))
+lines(x,y)
+hist(sample_means100$mean,breaks=60,xlab="Mean",col=c(3))
+x<-seq(155000,210000,by=10);
+y<-dnorm(x,mean(sample_means100$means),sd(sample_means100$mean))
+lines(x,y)
+```
+
+```{R}
+# h. 
+
+# Using the Central Limit Theorem, get a sample mean below $170k for a sample size of 100
+#RECALL
+sample_means100<-as.data.frame(replicate(5000,mean(sample(price,100))))
+names(sample_means100)<-"mean"
+head(sample_means100)
+
+```
+```{R}
+# percentage of 5000 sample means for sample size 100 below 170k
+table<-table(sample_means100<170000)
+table
+table/5000
+
+```
+```{R}
+table(sample_means4 < 190000 & sample_means4 > 130000)
+table(sample_means4 < 190000 & sample_means4 > 130000)/5000
+```
+```{R}
+Bournoulli <- function(numSamples,numTrials){
+  for(i in numTrials){
+    ZerosAndOnes<-round(runif(numSamples))
+                        sum(ZerosAndOnes)/numTrials
+                        results[i]<-ZerosAndOnes
+    
+  }
+}
+```
+
