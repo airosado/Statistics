@@ -1,0 +1,148 @@
+---
+title: 'STAT 224: PSet 5'
+author: "Avery I. Rosado"
+date: "5/11/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+rm(list=ls())
+library(stat224)
+library(dplyr)
+library(plotrix)
+library(data.table)
+library(car)
+```
+
+### Problem 3
+
+```{r}
+# a.
+# Demonstration of regression of Sales on Female var ONLY
+data <- P081
+fit <- lm(data$Sales ~ data$Female, data=data)
+summary(fit)
+### REAL
+fm <- lm(data$Sales ~ data$Age + data$HS + data$Income + data$Black + data$Female + data$Price, data=data) 
+summary(fm)
+confint(fm, level = 0.95)
+```
+
+```{r}
+confint(fit, level = 0.95)
+```
+
+```{r}
+# b.
+# FULL
+anova(fm)
+
+```
+
+```{r}
+rm <- lm(data$Sales ~ data$Age + data$Income + data$Black + data$Price, data=data) 
+# confint(rm, level = 0.95) 
+summary(rm)
+```
+
+```{r}
+rm_inc <- lm(data$Sales ~ data$Age + data$Black + data$Price, data=data) 
+summary(rm_inc)
+```
+
+```{r}
+fit <- lm(data$Sales ~ data$Income, data=data)
+summary(fit)
+```
+
+```{r}
+# f.
+data2 <- data[-14,]
+no_il_fit <- lm(data2$Sales ~ data2$Age + data2$Income + data2$Black + data2$Price)
+summary <- summary(no_il_fit)
+# g. 
+confint(no_il_fit, level = 0.95)
+```
+
+### Problem 4
+
+```{r}
+fm
+###
+# print(paste(round(cor(data$F, data$P1),3), "= Coeff: F, P1"))
+# print(paste(round(cor(data$F, data$P2),3), "= Coeff: F, P2"))
+# print(paste(round(cor(data$P1, data$P2),3), "= Coeff: P1, P2"))
+#######
+nostatedata <- data[,-1]
+pairs(nostatedata, pch=16)
+nostatedata <- data[,-1]
+cor(nostatedata)
+```
+
+```{r}
+summary(fm)
+```
+
+```{r}
+# g.
+# Linearity
+pairs(data[,-1])
+plot(fitted(fm),resid(fm),main="Residuals vs. Fitted Values",pch=16)
+plot(fm)
+```
+
+### Problem 5
+
+```{r}
+# a.
+milkdata <- P004
+pairs(milkdata,pch=16)
+```
+
+```{r}
+# b.
+# Residuals vs fits
+
+milkfit <- lm(milkdata$CurrentMilk ~ milkdata$Previous + milkdata$Fat + milkdata$Protein + milkdata$Days + milkdata$Lactation, data=milkdata)
+residuals <- resid(milkfit)
+plot(fitted(milkfit),residuals,pch=16,col="blue",main="5b. Standardized residuals vs. fitted values",ylab="Residuals",xlab="Fitted Milk Values")
+abline(h=0,lty="dashed")
+#####
+# Including IL9
+milkfit2 <- lm(milkdata$CurrentMilk ~ milkdata$Previous + milkdata$Fat + milkdata$Protein + milkdata$Days + milkdata$Lactation + milkdata$I79, data=milkdata)
+residuals2 <- resid(milkfit2)
+plot(fitted(milkfit2),residuals2,pch=16,col="green",main="5b. Standardized residuals vs. fitted values",ylab="Residuals",xlab="Fitted Milk Values")
+abline(h=0,lty="dashed")
+```
+
+```{r}
+plot(milkdata$Previous,residuals,pch=16,col="blue",main="Standardized Residuals vs. Previous Var Data (Predictor1)",xlab="Previous (milk production in lbs)",ylab="Residuals")
+abline(h=0,lty="dashed")
+plot(milkdata$Fat,residuals,pch=16,col="green",main="Standardized Residuals vs. Fat Var Data (Predictor2)",xlab="Fat (%)",ylab="Residuals")
+abline(h=0,lty="dashed")
+plot(milkdata$Protein,residuals,pch=16,col="red",main="Standardized Residuals vs. Protein Var Data (Predictor3)",xlab="Protein (%)",ylab="Residuals")
+abline(h=0,lty="dashed")
+plot(milkdata$Days,residuals,pch=16,col="pink",main="Standardized Residuals vs. Days Var Data (Predictor4)",xlab="Days",ylab="Residuals")
+abline(h=0,lty="dashed")
+plot(milkdata$Lactation,residuals,pch=16,col="purple",main="Standardized Residuals vs. Lactation Var Data (Predictor5)",xlab="Days",ylab="Residuals")
+abline(h=0,lty="dashed")
+plot(milkdata$I79,residuals,pch=16,col="orange",main="Standardized Residuals vs. I79 Var Data (Predictor6)",xlab="Days",ylab="Residuals")
+abline(h=0,lty="dashed")
+```
+
+```{r}
+# d.
+milkfit_avery <- lm(milkdata$CurrentMilk ~ milkdata$Previous + milkdata$Fat + milkdata$Days, data=milkdata)
+avery_resid <- resid(milkfit_avery)
+plot(fitted(milkfit_avery),avery_resid,pch=16,col="light blue",main="Standardized residuals vs. fitted values, Refined Model",ylab="Residuals",xlab="Fitted Milk Values")
+abline(h=0,lty="dashed")
+```
+
+```{r}
+# e.
+plot(milkfit_avery, col="light blue")
+```
+
+

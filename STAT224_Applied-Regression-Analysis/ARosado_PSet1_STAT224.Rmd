@@ -1,0 +1,145 @@
+---
+title: 'STAT 224: Homework #1b'
+author: "Avery I. Rosado"
+date: "Due Tuesday, April 6 by 11:59pm"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+geometry: margin=0.75in
+fontsize: 12pt
+fig_crop: no
+---
+
+```{r, setup, include=FALSE}
+library(stat224)
+```
+
+
+
+
+
+## (a) Read in data and summarize 
+
+See instructions on the HW assignment.
+
+A glimpse of the data:
+```{r, echo=FALSE}
+mydata <- read.csv("http://statistics.uchicago.edu/~burbank/data/sevengr.csv")
+glimpse(mydata)
+n <- nrow(mydata)
+```
+
+The data are gender and educational measurements on $n=`r n`$ seventh grade students.
+
+I did not type in the number `r n` above.
+Instead, I read it right from the data and 
+incorporated the data result directly within my report.
+Take a look inside the R Markdown file to see how I did that.
+
+\ 
+\ 
+
+I added a couple blank lines above.
+Take a look inside the R Markdown file to see how I did that.
+...and let me know if you find a better way to insert blank space in markdown.
+
+**Blank space can be insrted into a markdown by placing two spaces at the end of a text, hereby inserting a blank line between paragraphs. Additionally, HTML can be used--the & nbsp; code is readily available.**
+
+Here are the first 8 observations and the names of the columns (variables):
+
+```{r echo=FALSE}
+head(mydata, 8)
+```
+
+
+
+
+**I put a page break here**
+...so the data summary below was not split across two pages --
+watch out for this issue and avoid it!
+Take a look inside the R Markdown file to see how I did that.
+
+\newpage
+
+And here is another summary a little different from `glimpse`.
+
+```{r, echo=FALSE}
+summary(mydata)
+```
+
+## (b) Answer the HW question about the GPA variable.
+
+Read the question on the HW assignment.
+
+The GPA variable consists of values that are far too high; the highest achievable GPA at the University of Chicago is 4.0. This variable has likely been inflated by some multiplier or other means of universally increasing magnitude. 
+
+## (c) Numerical summaries
+
+See instructions are on the HW assignment.
+
+First, I will demonstrate labeling output, showing output, and commenting
+on output ...just as you will do for part (c) farther below.
+
+Average IQ score by gender:
+```{r echo=FALSE}
+mean(IQ ~ Gender, data = mydata)
+```
+The boys in the the seventh grade class averaged a little
+higher than the girls on an IQ test.
+
+I wrote "Average IQ score by gender" above my R code
+and then wrote a comment afterward about the results.
+So, there was no need to display the R code: `mean(IQ ~ Gender, data = mydata)`.
+
+**Be sure you know how to hide R code when it makes sense to do so 
+(most of the time).**
+
+Now, see part (c) in the HW assignment explaining what you are asked to do here.
+
+Of course, you will describe here what you plan to display below.
+```{r echo=FALSE}
+median(IQ ~ Gender, data = mydata) # IQ by gender
+median(GPA ~ Gender, data = mydata) # GPA by gender
+```
+Then, comment here on what you learn from the output of your R code above:
+Males in the seventh grade class have a slightly higher median IQ than girls, but maintain a marginally lower median GPA than do girls. Information on median IQ keeps with the previously gathered info on mean IQ. 
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+**CONTINUE TO THE NEXT PAGE TO PRACTICE WITH GRAPHICS.**
+
+\newpage
+
+## (d) Right-size these graphs 
+
+Instructions are on the HW assignment.
+
+```{r, fig.width=7, fig.height=5, echo=FALSE}
+p1 <- gf_histogram(~ IQ, data = mydata, color = "white", bins = 15)
+p2 <- gf_boxplot(IQ ~ Gender, data = mydata)
+p3 <- gf_point(GPA ~ IQ | Gender, data = mydata)
+p4 <- gf_point(GPA ~ IQ, data = mydata, color = ~Gender, size = ~SelfConcept, alpha = 0.4)
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+## (e) Modify the graphs and insert here
+
+```{r, fig.width=7, fig.height=5, echo=FALSE}
+p1 <- gf_histogram(~ SelfConcept, data = mydata, color = "white", bins = 15)
+p2 <- gf_boxplot(SelfConcept ~ Gender, data = mydata)
+p3 <- gf_point(SelfConcept ~ GPA | Gender, data = mydata)
+p4 <- gf_point(SelfConcept ~ GPA, data = mydata, color = ~Gender, size = ~IQ, alpha = 0.4)
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+```{R echo=FALSE}
+knitr::opts_knit$set(root.dir = '~/Desktop/CLASSES/STAT224/PSets/HW1')
+```
+![Honesty Agreement, ARosado](Exc1.png)

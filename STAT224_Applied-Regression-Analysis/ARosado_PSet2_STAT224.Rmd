@@ -1,0 +1,541 @@
+---
+title: "Homework #2, STAT 224"
+author: "Avery I. Rosado"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(stat224)
+library(dplyr)
+# --------------------------------------
+print.summary.lm <- 
+function (x, digits = max(3L, getOption("digits") - 3L), symbolic.cor = x$symbolic.cor,
+          signif.stars = getOption("show.signif.stars"), concise = FALSE, ...)
+    {
+        cat("\nCall:", if(!concise) "\n" else " ", paste(deparse(x$call), sep = "\n", collapse = "\n"),
+            if (!concise) "\n\n", sep = "")
+        resid <- x$residuals
+        df <- x$df
+        rdf <- df[2L]
+        if (!concise) {
+            cat(if (!is.null(x$weights) && diff(range(x$weights)))
+                    "Weighted ", "Residuals:\n", sep = "")
+        }
+        if (rdf > 5L) {
+            nam <- c("Min", "1Q", "Median", "3Q", "Max")
+            rq <- if (length(dim(resid)) == 2L)
+                      structure(apply(t(resid), 1L, quantile), dimnames = list(nam,
+                                                                   dimnames(resid)[[2L]]))
+                  else {
+                      zz <- zapsmall(quantile(resid), digits + 1L)
+                      structure(zz, names = nam)
+                  }
+            if (!concise) print(rq, digits = digits, ...)
+        }
+        else if (rdf > 0L) {
+            print(resid, digits = digits, ...)
+        }
+        else {
+            cat("ALL", df[1L], "residuals are 0: no residual degrees of freedom!")
+            cat("\n")
+        }
+        if (length(x$aliased) == 0L) {
+            cat("\nNo Coefficients\n")
+        }
+        else {
+            if (nsingular <- df[3L] - df[1L])
+                cat("\nCoefficients: (", nsingular, " not defined because of singularities)\n",
+                    sep = "")
+            else { cat("\n"); if (!concise) cat("Coefficients:\n")  }
+            coefs <- x$coefficients
+            if (!is.null(aliased <- x$aliased) && any(aliased)) {
+                cn <- names(aliased)
+                coefs <- matrix(NA, length(aliased), 4, dimnames = list(cn,
+                                                            colnames(coefs)))
+                coefs[!aliased, ] <- x$coefficients
+            }
+            printCoefmat(coefs, digits = digits, signif.stars = signif.stars, signif.legend = (!concise),
+                         na.print = "NA", eps.Pvalue = if (!concise) .Machine$double.eps else 1e-4, ...)
+        }
+        cat("\nResidual standard error:", format(signif(x$sigma,
+                                                        digits)), "on", rdf, "degrees of freedom")
+        cat("\n")
+        if (nzchar(mess <- naprint(x$na.action)))
+            cat("  (", mess, ")\n", sep = "")
+        if (!is.null(x$fstatistic)) {
+            cat("Multiple R-squared: ", formatC(x$r.squared, digits = digits))
+            cat(",\tAdjusted R-squared: ", formatC(x$adj.r.squared,
+                                                   digits = digits), "\nF-statistic:", formatC(x$fstatistic[1L],
+                                                       digits = digits), "on", x$fstatistic[2L], "and",
+                x$fstatistic[3L], "DF,  p-value:", format.pval(pf(x$fstatistic[1L],
+                                                                  x$fstatistic[2L], x$fstatistic[3L], lower.tail = FALSE),
+                                                               digits = digits, if (!concise) .Machine$double.eps else 1e-4))
+            cat("\n")
+        }
+        correl <- x$correlation
+        if (!is.null(correl)) {
+            p <- NCOL(correl)
+            if (p > 1L) {
+                cat("\nCorrelation of Coefficients:\n")
+                if (is.logical(symbolic.cor) && symbolic.cor) {
+                    print(symnum(correl, abbr.colnames = NULL))
+                }
+                else {
+                    correl <- format(round(correl, 2), nsmall = 2,
+                                     digits = digits)
+                    correl[!lower.tri(correl)] <- ""
+                    print(correl[-1, -p, drop = FALSE], quote = FALSE)
+                }
+            }
+        }
+        cat("\n")
+        invisible(x)
+    }
+```
+
+```{r, echo = F}
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=80),tidy=TRUE)
+```
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+# Set so that long lines in R will be wrapped:
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80), tidy=TRUE)
+```
+
+
+## Problem 1
+In order to investigate the feasibility of starting a Sunday edition for a large metropolitan newspaper, information was obtained from a sample of 34 newspapers concerning their daily and Sunday circulations (in thousands) ({\it Source: Gale Directory of Publications}, 1994). The data are given in Table 2.12 on page 54. If you have already loaded the `stat224` package (with the code `library(stat224)`), then this variable is already available to you. Load it with the command `data(P050)`:
+
+```{r echo=FALSE}
+data(P050)
+head(P050)
+```
+
+
+
+(a) Construct a scatter plot of Sunday circulation ($Y$) versus daily circulation ($X$). Does the plot suggest a linear relationship between daily and Sunday circulation? **Do you think this is a plausible relationship?**
+
+&nbsp;
+
+```{r echo=FALSE}
+plot(P050$Daily,P050$Sunday,pch=16,xlab="Daily Circulation (thousands)", ylab="Sunday Circulation (thousands)", main="Newspaper Circulation in thousands: Daily vs. Sunday")
+```
+&nbsp;
+(b) Fit a regression line predicting Sunday circulation from daily circulation. Save the results of the regression into a variable called `newspaper.lm`\\
+
+```{R echo=FALSE}
+fit_news <- lm(P050$Sunday ~ P050$Daily)
+fit_news
+```
+
+&nbsp;
+
+(c) Add the regression line to your scatterplot, using the function `abline(newspaper.lm)`.
+
+&nbsp;
+
+```{R echo=FALSE}
+plot(P050$Daily,P050$Sunday,pch=16,xlab="Daily Circulation (thousands)", ylab="Sunday Circulation (thousands)", main="Newspaper Circulation in thousands: Daily vs. Sunday")
+abline(fit_news, lty="dashed", col="dark gray")
+```
+
+&nbsp;
+
+(d) Using your regression results, for a paper with a daily circulation of 0, how many papers would you predict its Sunday circulation to be? **Comment on whether this number is sensible, and whether we should be concerned.**
+
+```{r echo=FALSE}
+sum_news <- summary(fit_news)
+print.summary.lm(summary(fit_news), concise = TRUE)
+# Ex. mod_summary$coefficients[1, 1]
+print(paste(sum_news$coefficients[1,1], "is the fit intercept."))
+print(paste("This is the number of papers that we predict would be circulated on a Sunday "))
+print(paste('when daily circulation is 0.'))
+```
+
+&nbsp;
+
+For a paper with a daily circulation of 0, it may not necessarily make sense that there will be a non zero Sunday circulation. It is the case for most newspapers that their papers are sold daily; this paper would only sell on Sundays. This is a theoretical possibility, but may not be a very common approach to newspaper sales.
+
+&nbsp;
+
+(e) Using your regression results, write out a formula to predict the Sunday circulation for a paper with a daily circulation equal to that of the Boston Globe. What number do you calculate?
+
+&nbsp;
+
+```{r echo=FALSE}
+df_news <- data.frame(P050)
+df_select <- df_news[2,]
+df_select$Daily # number of daily papers sold by the Boston Globe
+# From sum_news$coefficients[2,1] we know that the 1.339715 Sunday copies are sold per daily copy
+# We also know from sum_news$coefficients[1,1] the intercept
+x <- df_select$Daily
+sunday_equal_bg <- sum_news$coefficients[2,1]*x + sum_news$coefficients[1,1] # is the number of sunday copies sold when x daily copies are sold
+print(paste(sunday_equal_bg,'is the number of Sunday papers circulated for '))
+print(paste("a paper with a daily circulation equal to that of the Boston Globe."))
+
+# -------------------------------------------------------------------------------------
+# Graphical verification
+plot(P050$Daily,sunday_equal_bg <- sum_news$coefficients[2,1]*P050$Daily + sum_news$coefficients[1,1],type="l",lty="dotted",col="turquoise",xlab="Daily Circulation (thousands)", ylab="Sunday Circulation (thousands)", main="Linear Formula Verification", lwd=5.5)
+abline(fit_news, col="black")
+legend("bottomright",legend = c("Lin Formula Output","OLS Line of Fit"), fill = c("turquoise","black"), cex = 0.50)
+```
+
+&nbsp;
+
+(f) Compare this number with the actual Sunday circulation for the Globe. What is the residual for the Boston Globe? 
+
+&nbsp;
+
+```{r}
+df_news <- data.frame(P050)
+df_select <- df_news[2,]
+bg_sunday <- df_select$Sunday
+x <- data.frame(df_select$Daily)
+sunday_equal_bg <- sum_news$coefficients[2,1]*x + sum_news$coefficients[1,1]
+difference <- bg_sunday - round(sunday_equal_bg,10)
+print(paste(round(difference,2),'is the difference between circulation estimated and the recorded Sunday  '))
+print(paste('circulation of the Boston Globe. This is the residual for the Globe.'))
+```
+
+&nbsp;
+
+(g) Use the function `resid(newspaper.lm)` to obtain a list of residuals for all the newspapers. Check that your answer for (f) matches the number here. Now, calculate the sum of the squared residuals. (In R, this is simple: if the residuals are stored in a variable called `res`, we can simply take `sum(res^2)`.)
+
+&nbsp;
+
+```{R}
+residuals <- round(resid(fit_news),2)
+diff_residual <- residuals[2]-round(difference,2)
+print(paste(paste('Since the difference between the estimated residual and the R outputted using the ')))
+print(paste('resid function is', diff_residual,'the estimated value is proven correct.'))
+# ----------------------------------------------------------------------------------------
+ssr <- sum(residuals^2)
+print(paste('The sum of squared-residuals is:', round(ssr,2)))
+```
+
+&nbsp;
+
+(h) Use the `summary(newspaper_fit)` function to see a more complete output from your regression. The number that R calls "Residual standard error" is what your textbook calls $\hat\sigma$, the standard deviation of the errors (see e.g. formula 2.23). What value do you find for $\hat \sigma$?
+
+&nbsp;
+
+```{r echo=FALSE}
+sum_news
+```
+
+&nbsp;
+
+Residual standard error ($\hat\sigma$) is equal to 109.4.
+
+&nbsp;
+
+(i) Formula (2.23) in your textbook gives a relationship between the sum of the squared residuals ("SSE", where "E" actually stands for "error"), and an unbiased estimate of the SD of the errors, $\hat\sigma$:
+
+$$\hat\sigma^2=\frac{\text{SSE}}{n-2}$$
+Use this formula and your value of $\hat\sigma$ from (h) to compute the SSE. Does it equal your answer from (g)?
+
+&nbsp;
+
+```{r echo=FALSE}
+# SSE = (n-2)*(Residual Standard Error)^2
+rse <- 109.4
+n <- 34 # count(x)
+sse <- (n-2)*rse^2
+print(paste('SSE =',sse))
+print(paste(round(sse-ssr, 2),'is the difference between the SSE and the sum of squared residuals. '))
+print(paste('This would optimally be 0, however there is clearly some estimation here that has '))
+print(paste('caused the two values to be distinct, however their difference is relatively small.'))
+```
+
+&nbsp;
+
+(j) Simple Linear Regression finds the slope and the intercept which give the minimum values for the sum of the squared residuals. Test this here by using different values for the slope and the intercept, and calculating the sum of the squared residuals, by doing the following steps:
+
+&nbsp;
+
+1. You will try using a slope of 2 and and intercept of 10. Calculate a variable called `bad_predictions` which contains all the predicted Sunday circulations *using this slope and intercept*.
+
+&nbsp;
+
+```{r echo=FALSE}
+x <- df_news['Daily']
+bad_predictions <- 2*x+10
+```
+
+&nbsp;
+
+2. Calculate a variable called `bad_residuals`, containing the difference between the bad predictions and the observed Sunday circulations.
+
+&nbsp;
+
+```{r}
+bad_residuals <- df_news['Sunday']-bad_predictions
+```
+
+&nbsp;
+
+3. Use `bad_residuals` to compute the sum of the squared residuals. How does this compare to the sum of the squared residuals using the coefficients found by the regression?
+
+&nbsp;
+
+```{r}
+bad_ssr <- sum(bad_residuals^2)
+diff_residuals <- ssr - bad_ssr
+print(paste(diff_residuals,'is the difference in residuals between those found by the regression '))
+print(paste('and those found from the bad prediction.'))
+```
+
+&nbsp;
+
+## Problem 2
+Here we are going to try doing regression analysis on fake data that we have generated ourselves, so that we know the true slope and intercept.
+
+The following code generates fake data. The predictor $x$ takes on values from 1 to 20, the intercept is $a=0.2$, the slope is $b=0.3$, and the errors are normally distributed with mean 0 and SD $\sigma=0.5$.
+
+&nbsp;
+
+```{r}
+x <- 1:20 # predictor
+n <- length(x)
+a <- 0.2 # intercept 
+b <- 0.3 # slope
+sigma <- 0.5 # standard deviation
+y <- a + b*x + sigma*rnorm(n)
+```
+
+&nbsp;
+
+a) Plot the fake data.
+
+```{r echo=FALSE}
+plot(y, pch=16, xlab="x", ylab="y", main="Fake Data")
+```
+
+&nbsp;
+
+b) Fit a regression to this fake data. What slope and intercept did you find? **How do they compare to what you expected?**
+
+```{r echo=FALSE}
+plot(y, pch=16, xlab="x", ylab="y", main="Fake Data")
+fit <- lm(y ~ x)
+abline(fit,lty="dashed",col="dark gray")
+print.summary.lm(summary(fit), concise = TRUE)
+intercept <- round(summary(fit)$coefficients[1,1],5)
+slope <- round(summary(fit)$coefficients[2,1],5)
+print(paste('Intercept=',intercept,'; Slope=',slope))
+```
+
+&nbsp;
+
+The regression produces an accurate, tight fit of the plotted data that seems to make sense given the positive, yet small, slope and the negative intercept that reflects a handful of negative points. The outputted slope is 0.30173, which matches closely with the b value provided to the func of 0.3. Similarly, the outputted intercept is 0.16873, which less closely resembles the inputted slope of 0.2.
+
+&nbsp;
+
+c) The following bit of code defines a **function**, which will let you reuse the same bit of code with different inputs. You need replace all the parts. 
+
+When you run the chunk that defines `example_sum_function`, nothing happens. However, you can now call the function, and see that it computes the sum of its two inputs.
+
+&nbsp;
+
+```{r,eval=FALSE}
+# This chunk doesn't actually run, because I put "eval=FALSE" into the header. You can't see that in the pdf, but you can see it in the Rmd document.
+example_sum_function <- function(q,r)
+  return(q+r)
+```
+
+```{r,eval=FALSE}
+example_sum_function(3,4)
+```
+
+Your goal in this part of the problem is to modify the chunk below so that the function `fakedata` will generate fake data, plot it, and compute a regression. You'll need to replace all the lines that start ## !!! with actual code. Don't forget to remove the `eval=FALSE` bit so that the chunk actually runs.
+
+&nbsp;
+
+```{r}
+fakedata <- function(a,b,n,sigma){
+  x <- 1:n 
+  a <- a
+  b <- b
+  n <- n
+  sigma <- sigma
+  y <- a + b*x + sigma*rnorm(n) ### !!!
+  plot(y, pch=16, xlab="x", ylab="y", main="Fake Data") ##! !!!
+  model.lm <- lm(y ~ x) ### !!!
+  slope <- model.lm$coefficients[2] 
+  abline(model.lm,lty="dashed",col="dark gray")
+  summary(model.lm)
+}
+```
+
+&nbsp;
+
+Now test out your function by making sure this chunk runs, plots the data, and prints out the regression. Try changing the inputs!
+
+&nbsp;
+
+```{r, fig.width=7, fig.height=5, echo=FALSE}
+fakedata(a=0.4,b=0.1,n=30,sigma=1)
+fakedata(a=0.8,b=0.2,n=60,sigma=2)
+fakedata(a=1.6,b=0.4,n=120,sigma=4)
+fakedata(a=3.2,b=0.8,n=240,sigma=8)
+```
+
+&nbsp;
+
+d) Try running `fakedata` repeatedly, without changing the inputs. How much do the slopes from the regression vary? Find a way to quantify this variability. (You could do this by hand, by running the function many times and recording the results and then doing something with them to quantify the variability. Or, if you are comfortable doing so, you can program a loop into R. )
+
+&nbsp;
+
+```{r}
+# Can I do this without creating another func?
+fakedata2 <- function(a,b,n,sigma){
+  x <- 1:n 
+  a <- a
+  b <- b
+  n <- n
+  sigma <- sigma
+  y <- a + b*x + sigma*rnorm(n) ### !!!
+  model.lm <- lm(y ~ x) ### !!!
+  slope <- model.lm$coefficients[2] 
+  return(slope)
+}
+set.seed(15)
+variance <- var(replicate(10,fakedata2(0.4,0.1,30,1)))
+print(paste('Variance of the slope=',round(variance,5),'per the var function for 10 executions of the function.'))
+```
+
+&nbsp;
+
+e) Repeat the process you came up with in d), for several different values of n. (You will have the best luck if they are *very* different- for instance, `n=10`, `n=100`, and `n=1000`.) **What do you notice? Is this what you expected?**
+
+```{r}
+for(x in c(10,100,1000)){
+  var_index <- var(replicate(10,fakedata2(0.4,0.1,x,1)))
+  print(paste('Variance when n=',x,':',round(var_index,8)))
+}
+```
+
+&nbsp;
+
+As the value for n increases, variance decreases substantially. This makes sense, as we expect there to be greater noise in smaller samples. We also observe diminishing decreases in variance. The initial decrease from n=10 to n=100 yields a greater decrease in variance than the decrease from n=100 to n=1000. This is expected as well; at some point, increasing n will diminish in effect.
+
+&nbsp;
+
+## Problem 3
+Gather a set of before-after data. This might be the performance of athletes in two different years, economic performace in states or nations in two subsequent years, or Covid rates in states in subsequent months. 
+
+a) **Write some text in your homework document about what this data is and where you obtained it.**
+
+&nbsp;
+
+Found in Charles E Phelps Health Economics; Source: CDC Health 2015.
+
+&nbsp;
+
+b) Import the data into R. (You may need to first put it into a spreadsheet or a CSV file.) You should have two variables. You can name them what you want, but for clarity here I will call them `before` and `after`.
+
+```{r echo=FALSE}
+age_data <- read.csv('~/Desktop/CLASSES/STAT224/PSets/HW2/Age-Distribution-Dataset.csv')
+# Columns called method
+age_data <- age_data[-1,] # Remove 18 and under
+before <- age_data$X1960 
+after <- age_data$X2005
+after2 <- age_data$X2050
+# Dataframe method
+age_df <- data.frame(age_data)
+beforedf <- age_df['X1960']
+afterdf <- age_df['X2005']
+age_df
+```
+
+&nbsp;
+
+Note that a row containing the information for individuals 18 and under has been removed as it produces an outlier; the proportion of individuals under 18 has increased between 1960 and 2005 substantially, un
+
+&nbsp;
+
+c) Standardize each of the two variables (`before` and `after`) so each one has a mean of 0 and a standard deviation of 1.
+
+Here is some code that will do that for a variable called `before`:
+
+```{r echo=FALSE}
+# STANDARDIZE
+before_meansubtracted <- before-mean(before)
+before_standardized <- before_meansubtracted / sd(before_meansubtracted)
+
+after_meansubtracted <- after-mean(after)
+after_standardized <- after_meansubtracted / sd(after_meansubtracted)
+```
+
+&nbsp;
+
+d) Confirm that your standardized variables really do have means of 0 and SDs of 1.
+
+```{r, echo=FALSE}
+print(paste(round(mean(before_standardized),18),'is the mean of the standardized before variable'))
+print(paste(round(mean(after_standardized),18),'is the mean of the standardized after variable'))
+print(paste(sd(before_standardized),'is the standard deviation of the standardized before variable'))
+print(paste(sd(after_standardized),'is the standard deviation of the standardized after variable'))
+```
+
+&nbsp;
+
+e) Plot `before` vs `after`, and fit a regression where `after` is the response variable and `before` is the predictor variable.
+
+```{r echo=FALSE}
+plot(before,after, pch=16, type="o",xlab="Age distribution, 1960",ylab="Age distribution, 2005", main="Age distribution: 1960 v 2005")
+regress_ab <- lm(after ~ before)
+abline(regress_ab,lty="dashed",col="dark gray")
+regress_ab
+```
+
+&nbsp;
+
+f) **Fill the sentence "For a _______ that is 1 SD above average in ____ beofre, we expect it to be ________ SDs above average after.**
+
+For example, you might say "A state that had Covid case rates 1 SD above average in April would have Covid case rates 0.6 SD above average in May."
+
+&nbsp;
+
+When America had some age distribution of the general population 1 SD above average in 1960, we expect there to be age distirbution 1.034 SD's above average in 2005. 
+
+&nbsp;
+
+g) Using your results from (f), for individuals that are extreme (either extremely high or extremely low) in the `before` variable, do you predict that they are *more* or *less* extreme in the `after` variable? What's going on here?
+
+(For example, if states that are 2SD above average in Covid rates in April are typically only 1.2SD above average in May, we'd say they are less extreme in the `after` variable.)
+
+&nbsp;
+
+Given results from (f), slope of the regression line above is 1.034. This indicates a roughly symmetric relationship in the data. As standardized before data increases (predictor), standardized after data also increases (control) at a nearly equivalent rate. After data increases at a barely marginally greater rate. Thus, for individuals that are extreme in the 'before' variable, we expect extreme performance in the 'after' variable as well (though, per the slope, after data will be barely more extreme).
+
+&nbsp;
+
+h) Now repeat steps e-g except using your `after` variable as the *predictor* and your `before` variable as the *response*.
+
+```{r echo=FALSE}
+plot(after,before, pch=16, type="o",xlab="Age distribution, 2005",ylab="Age distribution, 1960", main="Age distribution: 2005 v 1960")
+regress_ab <- lm(before ~ after)
+abline(regress_ab,lty="dashed",col="dark gray")
+```
+
+&nbsp;
+
+**fii.** When America had some age distribution of the general population 1 SD above average in 2005, we expect there to be age distribution 0.9617 SD's above average in 2005.
+
+&nbsp;
+
+**gii.** Given results from (f), slope of the regression line above is 0.9617. Similar to the above, inverted analysis, this indicates a roughly symmetric relationship in the data. As standardized before data increases, standardized after data also increases at a nearly equivalent rate. Before data increases at a barely marginally greater rate. Thus, for individuals that are extreme in the 'after' variable, we expect extreme performance in the 'before' variable as well (though, per the slope, before data will be barely more extreme).
+
+&nbsp;
+
+i) **What statistical concept have you just demonstrated here?**
+This example demonstrates the effect of switching repsonse and explanatory variable in SLR. This demonstrates that these variables can, in certain instances produce significant, telling relationships regardless of order. My observations are somewhat limited in scope since the slope observed is very close to 1; this means that a nearly identical relationship exists between the two variables in my experiment. Switching variables for another dataset that yielded less closely associated regression variables would have allowed for a more holistic observation of how the fit of a regression analysis changes when variable order changes.
+
+&nbsp;
+
+**You should compare your model summary from part (h) to your output from part (e). In particular, you should note which things change and which things stay the same. You should then explain what you found.**

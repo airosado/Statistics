@@ -1,0 +1,288 @@
+---
+title: 'STAT 224: PSet 4'
+author: "Avery I. Rosado"
+date: "4/26/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(stat224)
+library(dplyr)
+```
+
+## Problem 1
+
+### a.
+
+```{r echo=FALSE}
+data <- P076
+fit1 <- lm(data$F ~ data$P1, data=data)
+fit2 <- lm(data$F ~ data$P2, data=data)
+fit3 <- lm(data$P1 ~ data$P2, data=data)
+###
+print(paste(round(cor(data$F, data$P1),3), "= Coeff: F, P1"))
+print(paste(round(cor(data$F, data$P2),3), "= Coeff: F, P2"))
+print(paste(round(cor(data$P1, data$P2),3), "= Coeff: P1, P2"))
+#######3
+pairs(data)
+
+```
+
+**Commentary:** It appears that, for all of the correlations displayed above, there is positive association between the variables. The pairs function is used to generate a matrix of scatterplots for different variable combinations in the dataset. This is useful for gaining an overarching insight into the behavior of the data for mulitple variables and predictors.
+
+### b.
+
+```{r}
+model1 <- lm(data$F ~ data$P1, data=data)
+model2 <- lm(data$F ~ data$P2, data=data)
+model3 <- lm(data$F ~ data$P1 + data$P2, data=data) 
+###########################
+anova(model1,model2,model3)
+cat("for Model 1 \n")
+summary(model1)
+cat("for Model 2 \n")
+summary(model2)
+cat("for Model 3 \n")
+summary(model3)
+```
+
+### c.
+
+```{r}
+print(paste("Model 1, B0 =",round(model1$coefficients[1],3)))
+print(paste("Model 2, B0 =",round(model2$coefficients[1],3)))
+print(paste("Model 3, B0 =",round(model3$coefficients[1],3)))
+```
+
+### d.
+R^2 for P1 and P2
+```{r echo=FALSE}
+# summary(lm(speed~dist, cars))$r.squared
+summary(model1)$r.squared
+summary(model2)$r.squared
+```
+
+Since the R-squared value for model 2 is greater than that of Model 1, we take it that P2 is a better predictor of F. 
+
+### e. 
+Higher R^2, more predictors
+We expect that the third model will perform best in fitting the data because it includes the greater number of predictors to regress on. Thus, there is closer fitting to the data in this model. This regression will predict a rough score in the eighties for students taking the final. 
+
+## Problem 2
+
+### a.
+
+k is the number of parameters being predicted in the model, which is 2. Therefore p=1.
+
+```{r}
+p <- 1
+```
+
+### b.
+
+MSR = SSR/p
+
+```{r}
+SSE <- 479.755
+SSR <- 1848.76
+MSR <- SSR/p
+print(round(MSR,3))
+```
+
+### c.
+
+MST/MSE
+
+```{r}
+n <- 20
+MSE <- SSE/(n-p-1)
+F <- MSR/MSE
+print(round(F,3))
+```
+
+### d.
+
+```{r}
+# SSE
+SSE <- (n-2)*MSE
+print(round(SSE,3))
+```
+
+### e.
+
+```{r}
+print(round(n-p-1,3))
+```
+
+### f.
+
+```{r}
+MSE <- SSE/(n-p-1)
+print(round(MSE,3))
+```
+
+### g.
+
+```{r}
+beta0_hat <- -23.4325
+se_beta0_hat <- 12.74
+t_stat <- beta0_hat/se_beta0_hat
+print(round(t_stat,3))
+```
+
+### h.
+
+```{r}
+constant_t <- 8.32
+constant_se <- 0.1528
+h <- constant_t*constant_se
+print(round(h,3))
+```
+
+### i.
+
+```{r}
+print(20)
+```
+
+### j.
+
+```{r}
+Rsq <- (SSR + SSE)
+print(round(Rsq,3))
+Rsq <- 0.794
+print(paste("Corrected value, non-R:",Rsq))
+```
+
+### k.
+
+```{r}
+adjustr2 <- (MSE/(n-2))/(2328.51508/(n-1))
+print(round(adjustr2,3))
+adjustr2 <- 0.01208
+print(paste("Corrected value, non-R:",adjustr2))
+```
+
+### l.
+
+```{r}
+sigma <- sqrt((n-1)*60.2057*0.0233)
+print(round(sigma,3))
+```
+
+### m.
+
+```{r}
+df <- 20-2
+print(df)
+```
+
+### n.
+
+```{r}
+#var_y <- (1/(n-1))*sum((indexy-mean(indexy))^2)
+#print(round(var_y,3))
+```
+
+### o.
+
+```{r}
+#betahat1 <- (sum(indexy*indexx))/(sum(indexx^2))
+```
+
+## Problem 3
+
+### a.
+
+H0: There is no difference between the model without independent variables and the new model. y=intercept, coefficients=0. 
+\\
+HA: The new model more closely fits the data than the model without independent variables
+
+```{r}
+# alpha = 0.05
+F <- MSR/MSE
+print(F)
+```
+
+F = 69.3639. This is greater than the critical value of 2.5, therefore the H0 is rejected. The new model is significant in that it more closely fits the data than the model without independent variables.
+
+### b.
+
+H0: Correction does not occur between dependent and independent variables
+
+HA; Correction occurs between dependent and independent variables.
+
+```{r}
+print(round(sqrt(Rsq),3))
+```
+
+Since the value recorded above is not equal to 0 and there is, in fact, a strong correlation between the variables, we can say that there is some correction; we reject the null because one variable may be responsible for the effect of the others. 
+
+### c.
+
+```{r}
+# Given the conditions for the variables
+gender <- 1
+education <- 12
+experience <- 10
+months <- 15
+salary <- 3526.4+722.5*gender+90.02*education+1.269*experience+23.406*months
+print(paste("salary =",salary))
+```
+
+### d.
+
+```{r}
+gender <- 1
+education <- 12
+experience <- 10
+months <- 15
+salary <- 3526.4+722.5*gender+90.02*education+1.269*experience+23.406*months
+print(paste("salary =",salary))
+```
+
+### e.
+
+```{r}
+gender <- 0
+education <- 12
+experience <- 10
+months <- 15
+salary <- 3526.4+722.5*gender+90.02*education+1.269*experience+23.406*months
+print(paste("salary =",salary))
+```
+
+## Problem 4
+
+### a.
+
+```{r}
+avgspending <- 20000
+sd <- 5000
+avgproduced <- 30000
+# each additional 1000 of spending resulting in an additional 1500 in revenue
+RSE <- 4000 # sigma hat
+n <- 30
+spent <- 27000
+term <- 5000^2/(1/(n-1))
+se_y0 <- RSE*sqrt(1+(1/n)+(spent/avgspending)/(term))
+critical <- 2.04 
+y0hat <- 40500
+# y0hat +/- critical*se_y0
+upperlimit <- y0hat + critical*se_y0
+lowerlimit <- y0hat + critical*se_y0
+print(paste("95% CI: (",lowerlimit,",",upperlimit,")"))
+```
+
+### b.
+
+We find some t to make 95% CI include 27000; this is observed to be 3.2. This is greater than the furthest t-val on the chart, so there is some probability that the value will fall in this range
+
+
+
+
+

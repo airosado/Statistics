@@ -1,0 +1,478 @@
+---
+title: 'PSet 3: STAT 224'
+author: "Avery I. Rosado"
+date: "4/16/2022"
+output: pdf_document
+---
+```{r setup, include=FALSE, echo=FALSE}
+rm(list=ls())
+library(stat224)
+library(dplyr)
+library(plotrix)
+library(data.table)
+library(car)
+```
+
+## Problem 1
+
+```{r}
+table <- P027
+minutes <- P027$Minutes # y
+units <- P027$Units # x
+n <- 14
+# a.
+var_minutes <- sum((minutes-mean(minutes))^2)/(n-1)
+var_units <- sum((units-mean(units))^2)/(n-1)
+print(paste(round(var_minutes,3), 'is the variance in the Minutes variable'))
+print(paste(round(var_units,3), 'is the variance in the Units variable'))
+print(paste(round(var(minutes),3),", verification via var func"))
+print(paste(round(var(units),3),", verification via var func"))
+```
+
+```{r}
+# b. 
+sum_index <- rep(NA, 14)
+for(x in 1:14){
+  sum_index[x] <- minutes[x]-mean(minutes)
+}
+print(paste(round(mean(sum_index),5), "is the rounded average. This is verification."))
+
+```
+
+```{r}
+# c.
+minutes_standardized <- (minutes-mean(minutes)) / sd((minutes-mean(minutes)))
+print(paste(round(mean(minutes_standardized),5),"= mean of standardized y-values (rounded)"))
+print(paste(round(sd(minutes_standardized),5),"= standard deviation of standardized y-values (rounded)"))
+```
+
+```{r}
+# d.
+n <- 14
+# 2.5
+for(x in 1:n){
+  output1 <- ((minutes[x]-mean(minutes))/sd(minutes))* ((units[x]-mean(units))/sd(units))
+}
+# output1 <- (1/n-1)*(sum(((minutes-mean(minutes))/sd(minutes))*((units-mean(units))/sd(units))))
+output1 <- (1/n-1)*sum(output1)
+print(paste("Cor(Y,X) =",round(output1,3),"when Equation 2.5 is used"))
+# 2.6
+# FIND COV(Y,X)
+output2_cov <- (sum(((minutes-mean(minutes))*(units-mean(units)))))/(n-1)
+# FIND COR(Y,X)
+output2 <- output2_cov/(sd(minutes)*sd(units))
+print(paste("Cor(Y,X) =",round(output2,3),"when Equation 2.6 is used"))
+# 2.7
+output3 <- sum((((minutes[x]-mean(minutes))*(units[x]-mean(units)))))/sqrt(sum(((minutes[x]-mean(minutes))^2))*sum(((units[x]-mean(units))^2)))
+print(paste("Cor(Y,X) =",round(output3,3),"when Equation 2.7 is used"))
+```
+
+```{r}
+# e.
+# 2.14
+output14 <- (sum((minutes-mean(minutes))*(units-mean(units))))/(sum(((units-mean(units))^2)))
+print(paste("Beta-hat-1 =",round(output14,3),"for Eq. 2.14"))
+# 2.20
+output20 <- output3*(sd(minutes)/sd(units))
+print(paste("Beta-hat-1 =",round(output20,3),"for Eq. 2.20.1"))
+# 2.20, pt. 2s
+output20.2 <- output2*(sd(minutes)/sd(units))
+print(paste("Beta-hat-1 =",round(output20.2,3),"for Eq. 2.20.2"))
+```
+
+```{r}
+# f. 
+# Coefficient, Constant: betanaughthat
+txtval <- 4.162
+val1 <- round(mean(minutes)-output14*(mean(units)),3)
+print(paste("Experimental =",round(val1),"; Theoretical =",txtval))
+# ifelse(val1==txtval,print("TRUE"),print("FALSE"))
+# Coefficient, Units: betahat1
+txtval <- 15.509
+val2 <- round(output14,3)
+print(paste("Experimental =",val2,"; Theoretical =",txtval))
+
+# se, Constant:se(betanaughthat)
+txtval <- 3.355
+SSE <- sum((minutes-mean(minutes))^2)
+# sigma <- sqrt((SSE/(n-2)))
+fit <- lm(minutes ~ units)
+sigma <- sqrt(sum(resid(fit)^2)/fit$df.resid)
+val3 <- sigma*(sqrt((1/n)+((mean(units))^2)/(sum((units-mean(units))^2))))
+print(paste("Experimental =",val3,"; Theoretical =",txtval))
+
+# se, Units: se(betahat1)
+txtval <- 0.505
+val4 <- sigma/(sqrt(sum((units-mean(units))^2 )))
+print(paste("Experimental =",val4,"; Theoretical =",txtval))
+
+# ttest, Constant: t0
+txtval <- 1.24
+beta.hat.1 <- (sum((minutes-mean(minutes))*(units-mean(units))))/(sum((units-mean(units))^2))
+beta.naught.hat <- mean(minutes)-(beta.hat.1*mean(units))
+val5 <- beta.naught.hat/val3
+print(paste("Experimental =",val5,"; Theoretical =",txtval))
+
+# ttest, Units: t1
+txtval <- 30.71
+val6 <- beta.hat.1/val4
+print(paste("Experimental =",val6,"; Theoretical =",txtval))
+
+#pvalue, Constant: p0
+txtval <- 2385
+val7 <- 2*(1-pt(abs(val5),n-1))
+print(paste("Experimental =",val7,"; Theoretical =",txtval))
+
+#pvalue, Units:p1
+txtval <- 0.0001
+val8 <- round(2*(1-pt(abs(val6),n-1)),4)
+print(paste("Experimental =",val8,"; Theoretical =",txtval))
+
+```
+
+## Problem 2
+
+```{r}
+# a
+fit <- lm(minutes ~ units)
+beta.1.hat <- fit$coefficients[2]
+sigma.hat <-  sqrt(sum(resid(fit)^2)/fit$df.resid)
+SE.beta.1.hat <- (sigma.hat*sqrt(1/sum((units-mean(units))^2)))
+tstat <- (beta.1.hat-15)/SE.beta.1.hat
+p_val <- 2*(1-pt(abs(tstat),fit$df.resid))
+data.frame(beta.1.hat,SE.beta.1.hat,tstat,p_val)
+# verify a
+summary(fit)
+#
+linearHypothesis(fit, "(Intercept)=1.2")
+```
+
+```{r}
+# b. 
+linearHypothesis(fit, "units=15")
+```
+
+```{r}
+# c.
+linearHypothesis(fit,"(Intercept)=0")
+# d.
+linearHypothesis(fit,"(Intercept)=5")
+```
+
+```{r}
+# e.
+L_1 <- beta.1.hat - qt(0.99, fit$df.resid) * val2
+U_1 <- beta.1.hat + qt(0.99, fit$df.resid) * val2
+beta.0.hat <- ((lm(P025b$Y1 ~ P025b$X1))$coefficients)[1]
+L_0 <- beta.0.hat - qt(0.99, fit$df.resid) * val3
+U_0 <- beta.0.hat + qt(0.99, fit$df.resid) * val3
+data.frame(L_1,U_1,L_0,U_0)
+```
+
+(L,U): (-26.07,57.09)
+
+## Problem 3
+
+```{r}
+# P025b
+# a
+beta.1.hat.1 <- ((lm(P025b$Y1 ~ P025b$X1))$coefficients)[2]
+beta.1.hat.2 <- ((lm(P025b$Y2 ~ P025b$X2))$coefficients)[2]
+beta.1.hat.3 <- ((lm(P025b$Y3 ~ P025b$X3))$coefficients)[2]
+beta.1.hat.4 <- ((lm(P025b$Y4 ~ P025b$X4))$coefficients)[2]
+print(paste("Beta 1 hat vals=",beta.1.hat.1,",",beta.1.hat.2,",",beta.1.hat.3,",",beta.1.hat.4))
+beta.0.hat.1 <- ((lm(P025b$Y1 ~ P025b$X1))$coefficients)[1]
+beta.0.hat.2 <- ((lm(P025b$Y2 ~ P025b$X2))$coefficients)[1]
+beta.0.hat.3 <- ((lm(P025b$Y3 ~ P025b$X3))$coefficients)[1]
+beta.0.hat.4 <- ((lm(P025b$Y4 ~ P025b$X4))$coefficients)[1]
+print(paste("Beta 0 hat vals=",beta.0.hat.1,",",beta.0.hat.2,",",beta.0.hat.3,",",beta.0.hat.4))
+# beta.1.hat.1 <- fit1[]
+
+```
+
+```{r}
+# b.
+n <- 11
+eq1_cov <- rep(NA, n)
+for(x in 1:n){
+  eq1_cov[x] <- ((P025b$Y1[x]-mean(P025b$Y1))*(P025b$X1[x]-mean(P025b$X1)))
+}
+output1_cov <- (sum(eq1_cov))/n-1
+# FIND COR(Y,X)
+output1 <- output1_cov/(sd(P025b$Y1)*sd(P025b$X1))
+print(paste("Cor(Y,X) =",round(output1,3),"for vars 1"))
+
+eq2_cov <- rep(NA, n)
+for(x in 1:n){
+  eq2_cov[x] <- ((P025b$Y2[x]-mean(P025b$Y2))*(P025b$X2[x]-mean(P025b$X2)))
+}
+output2_cov <- (sum(eq2_cov))/n-1
+# FIND COR(Y,X)
+output2 <- output2_cov/(sd(P025b$Y2)*sd(P025b$X2))
+print(paste("Cor(Y,X) =",round(output2,3),"for vars 2"))
+
+eq3_cov <- rep(NA, n)
+for(x in 1:n){
+  eq3_cov[x] <- ((P025b$Y3[x]-mean(P025b$Y3))*(P025b$X3[x]-mean(P025b$X3)))
+}
+output3_cov <- (sum(eq3_cov))/n-1
+# FIND COR(Y,X)
+output3 <- output3_cov/(sd(P025b$Y3)*sd(P025b$X3))
+print(paste("Cor(Y,X) =",round(output3,3),"for vars 3"))
+
+eq4_cov <- rep(NA, n)
+for(x in 1:n){
+  eq4_cov[x] <- ((P025b$Y4[x]-mean(P025b$Y4))*(P025b$X4[x]-mean(P025b$X4)))
+}
+output4_cov <- (sum(eq2_cov))/n-1
+# FIND COR(Y,X)
+output4 <- output4_cov/(sd(P025b$Y4)*sd(P025b$X4))
+print(paste("Cor(Y,X) =",round(output4,3),"for vars 4"))
+```
+
+```{r}
+# c. 
+print(paste(round(summary(lm(P025b$Y1 ~ P025b$X1))$r.squared,3),"= R^2, vars 1"))
+print(paste(round(summary(lm(P025b$Y2 ~ P025b$X2))$r.squared,3),"= R^2, vars 2"))
+print(paste(round(summary(lm(P025b$Y3 ~ P025b$X3))$r.squared,3),"= R^2, vars 3"))
+print(paste(round(summary(lm(P025b$Y4 ~ P025b$X4))$r.squared,3),"= R^2, vars 4"))
+```
+
+```{r}
+# d.
+fit <- lm(P025b$Y1 ~ P025b$X1)
+beta.1.hat <- fit$coefficients[2]
+sigma.hat <- sqrt(sum(resid(fit)^2)/fit$df.resid)
+SE.beta.1.hat <- (sigma.hat*sqrt(1/sum((units-mean(units))^2)))
+tstat <- (beta.1.hat-0)/SE.beta.1.hat
+p_val <- 2*(1-pt(abs(tstat),fit$df.resid))
+data.frame(beta.1.hat,SE.beta.1.hat,tstat,p_val)
+fit <- lm(P025b$Y2 ~ P025b$X2)
+beta.1.hat <- fit$coefficients[2]
+sigma.hat <- sqrt(sum(resid(fit)^2)/fit$df.resid)
+SE.beta.1.hat <- (sigma.hat*sqrt(1/sum((units-mean(units))^2)))
+tstat <- (beta.1.hat-0)/SE.beta.1.hat
+p_val <- 2*(1-pt(abs(tstat),fit$df.resid))
+data.frame(beta.1.hat,SE.beta.1.hat,tstat,p_val)
+fit <- lm(P025b$Y3 ~ P025b$X3)
+beta.1.hat <- fit$coefficients[2]
+sigma.hat <- sqrt(sum(resid(fit)^2)/fit$df.resid)
+SE.beta.1.hat <- (sigma.hat*sqrt(1/sum((units-mean(units))^2)))
+tstat <- (beta.1.hat-0)/SE.beta.1.hat
+p_val <- 2*(1-pt(abs(tstat),fit$df.resid))
+data.frame(beta.1.hat,SE.beta.1.hat,tstat,p_val)
+fit <- lm(P025b$Y4 ~ P025b$X4)
+beta.1.hat <- fit$coefficients[2]
+sigma.hat <- sqrt(sum(resid(fit)^2)/fit$df.resid)
+SE.beta.1.hat <- (sigma.hat*sqrt(1/sum((units-mean(units))^2)))
+tstat <- (beta.1.hat-0)/SE.beta.1.hat
+p_val <- 2*(1-pt(abs(tstat),fit$df.resid))
+data.frame(beta.1.hat,SE.beta.1.hat,tstat,p_val)
+```
+
+## Problem 4 
+**One may wonder if people of similar heights tend to marry each other. For this purpose, a sample of newly married couples was selected. Let X be the height of the husband (in cm) and Y be the height of the wife (in cm). The heights of husbands and wives can be found in Table 2.11 on page 52 and are stored in the variable P049.**
+
+```{r}
+# a.
+n <- 96
+eq_cov <- rep(NA,n)
+for(x in 1:n){
+  eq_cov[x] <- ((P049$Wife[x]-mean(P049$Wife))*(P049$Husband[x]-mean(P049$Husband)))
+}
+output_cov <- (sum(eq_cov))/(n-1)
+print(paste(round(output_cov,3),"= COV(Y,X)"))
+```
+
+```{r}
+# b. 
+cm_to_inches <- 0.393701 # inches per cm
+df_inches <- P049*cm_to_inches # inches dataframe
+#
+n <- 96
+eq_cov <- rep(NA,n)
+for(x in 1:n){
+  eq_cov[x] <- ((df_inches$Wife[x]-mean(df_inches$Wife))*(df_inches$Husband[x]-mean(df_inches$Husband)))
+}
+output_cov <- (sum(eq_cov))/n-1
+print(paste(round(output_cov,3),"= COV(Y,X) when height is measured in inches "))
+```
+
+```{r}
+# c. correlation coefficient
+print(paste((lm(P049$Husband ~ P049$Wife))$coefficients[2],"= Correlation Coefficient"))
+#d.
+plot(P049$Wife,P049$Husband,pch=16,xlab="Wife Height (cm)",ylab="Husband Height (cm)",main="Do People of Similar Heights Tend to Marry")
+#e.
+print(paste((lm(df_inches$Husband ~ df_inches$Wife))$coefficients[2],"= Correlation Coefficient when height recorded in inches"))
+```
+
+```{r}
+# f.
+P049["Wife_Imagined"] <- P049$Husband-5
+print(paste((lm(P049$Husband ~ P049$Wife_Imagined))$coefficients[2],"= Correlation Coefficient when men marry only women exactly 5 centimeters shorter"))
+```
+
+```{r}
+# g. 
+fit <- lm(P049$Wife ~ P049$Husband)
+linearHypothesis(fit,"P049$Husband = 0")
+# h. test the null 
+
+# beta.1.hat <- fit$coefficients[2]
+# sigma.hat <- sqrt(sum(resid(fit)^2)/fit$df.resid)
+# SE.beta.1.hat <- (sigma.hat*sqrt(1/sum((units-mean(units))^2)))
+# tstat <- (beta.1.hat-15)/SE.beta.1.hat
+# p_val <- 2*(1-pt(abs(tstat),fit$df.resid))
+# data.frame(beta.1.hat,SE.beta.1.hat,tstat,p_val)
+```
+
+P-value generated from this analysis is significantly lower than would be any reasonable alpha threshold. Thus, we reject the null and understand that, as a result the slope is not zero. This aligns with the data; there is a substantive non-zero relationship between the variables.
+
+### i.
+If we had failed to reject the H0, then the H0 would be accepted; the slope is zero. This means there is no relationship between the two variables--the height of one spouse does not correlate with the height of the other; people do not necessarily get married to people with comparable height.
+
+```{r}
+# summary(lm(P049$Husband ~ P049$Wife))
+# j. 
+fit <- lm(P049$Wife ~ P049$Husband)
+linearHypothesis(fit,"(Intercept) = 0")
+# sigma.hat = sqrt(sum(resid(fit)^2)/fit$df.resid)
+# n <- length(P049$Husband)
+# beta.0.hat <- fit$coefficients[1]
+# SE.beta.0.hat <- (sigma.hat * sqrt((1/n) + (mean(P049$Husband)^2/sum((P049$Husband - mean(P049$education))^2))))
+# Tstat <- (beta.0.hat - 0)/SE.beta.0.hat
+# p_val <- 2*(1-pt(abs(Tstat),fit$df.resid))
+# data.frame(beta.0.hat,SE.beta.0.hat,Tstat,p_val)
+
+```
+
+At this low P-value, we are likely to reject the H0. Across most alpha-value thresholds, this p will not pass, and will result in rejection of the null. The intercept is not zero, such that variables do not start at the same value (0,0), which influences our interpretation of their relationship with each other.
+
+### k. 
+
+Failure to reject H0: intercept (beta naught hat) = 0 would have meant that would mean H0 is accepted and that betanught hat is equal to 0. Thus, the system would find its initial value at 0. A smaller intercept value would mean that husbands are taller relative to their wives; the opposite would be true if the the intercept were larger--husbands would be shorter relative to their wives.
+
+### l.
+
+Test 1: H0: beta-1 = some positive value that is relatively close to 1 (within some reasonable margin) verses H1: beta-1 > the upper bound of said margin
+
+Test 2: H0: beta-1 = some positive value that is relatively close to 1 (within some reasonable margin) verses H1: beta-1 < the lower bound of said margin
+
+Test 3: H0: beta-0 = 0 versus H1: beta-0 >= some positive value that is not close to 0 (ie. is greater than 0 by some reasonable margin)
+
+Test 4: H0: beta-0 = 0 versus H1: beta-0 <= some positive value that is not close to 0 (ie. is less than 0 by some reasonable margin)
+
+Standardizing the data may also allow for closer analysis; we cn test H0: beta-1=1 vs. beta-1=/=1. 
+
+Likely conclusions include that as height in one spouse increases, height in another spouse also increases; we are likely to observe that husband height is generally greater than wife height, per the intercept. 
+
+## Problem 5
+
+```{r}
+# a.
+fit_news <- lm(Sunday ~ Daily, data = P050)
+plot(P050$Daily,P050$Sunday,pch=16,xlab="Daily Circulation (thousands)", ylab="Sunday Circulation (thousands)", main="Newspaper Circulation in thousands: Daily vs. Sunday")
+abline(fit_news, lty="dashed", col="dark gray")
+```
+
+```{r}
+# b. 
+confint(fit_news, level = .95)
+```
+
+95% CI, intercept (beta-naught-hat): (-59.094743,86.766003)
+95% CI, slope (beta-1-hat): (1.195594,1.483836)
+
+```{r}
+# c. Is there a significant relationship between Sunday circulation and daily circulation? Justify your answer using only a confidence interval from part (b). Indicate what hypothesis you are testing and your conclusion.
+summary(fit_news)
+```
+
+The relationship between Daily and Sunday circulations is shown to be significant as a result of via the interval above; relative to the breadth and range of data represented in this dataset, there is a relatively small range over which we can say that both the intercept and slope will fall within with as high as 95% certainty. 
+
+This is verified by the F and T-tests displayed in the summary above; the relationship between Daily and Sunday (as quantified by the B1 value) is verified to be significant.
+
+```{r}
+# d. What proportion of the variability in Sunday circulation is accounted for by daily circulation?
+(summary(fit_news))$r.squared
+print(paste("Percent variability explained =",((summary(fit_news))$r.squared)*100,"%"))
+
+```
+
+91.81% of variability in Sunday circulation is accounted for by the daily circulation, per the R-squared value determined from our regressed function. 
+
+```{r}
+# e. 
+fit_news <- lm(Sunday ~ Daily, data = P050)
+est <- data.frame(Daily = c(500))
+predict(fit_news, est, interval = "confidence",level = 0.95)
+```
+
+For newspapers with faily circulation equals 500k, epxected Sunday circulation falls in the interval (644.1951,723.191) with 95% certainty. 
+
+```{r}
+# f. 
+est2 <- data.frame(Daily = c(500))
+predict(fit_news,est2,interval = "predict",level = 0.95)
+```
+
+For this specific newspaper with 500k in Daily circulation, the interval overa which we estimate is larger because variability has increased in response to a single instance being tested rather than the full set of magazines. Interval: (457.3367,910.0493) with 95% certainty.
+
+```{r}
+# g. 
+est3 <- data.frame(Daily = c(2000))
+predict(fit_news,est3,interval = "predict",level = 0.95)
+```
+
+95% Interval Estimate: (2373.463,3013.068)
+Compare with the interval for 500k in daily circulation: (457.3367,910.0493). This new interval for 2,000,000 in daily circulation is characterized by even greater variability. Overall, both are unlikely to be accurate given this characteristic; the daily circulation of this paper is too large to yield a interval with 95% confidence that is not very broad in the way that this interval has been shown to be. 
+
+## Problem 6
+
+```{r echo=FALSE}
+age_data <- read.csv('~/Desktop/CLASSES/STAT224/PSets/HW2/Age-Distribution-Dataset.csv')
+# Columns called method
+age_data <- age_data[-1,] # Remove 18 and under
+before <- age_data$X1960 
+after <- age_data$X2005
+after2 <- age_data$X2050
+# Dataframe method
+age_df <- data.frame(age_data)
+beforedf <- age_df['X1960']
+afterdf <- age_df['X2005']
+age_df
+
+# STANDARDIZE
+before_meansubtracted <- before-mean(before)
+before_standardized <- before_meansubtracted / sd(before_meansubtracted)
+
+after_meansubtracted <- after-mean(after)
+after_standardized <- after_meansubtracted / sd(after_meansubtracted)
+
+stand_fit <- lm(after ~ before)
+
+summary(stand_fit)
+```
+
+t-test for slope: 27.889
+p-value for slope: 9.83e-06
+Absolute value of t is greater than critical value, and the H0 is rejected. Slop is not <0.5. This is verified by slope value and p-value.
+
+## Problem 7
+
+(a) Confidence interval
+The CI is the interval, or range of values, over which we expect to find some variable or parameter with some varied degree of assurance.
+
+(b) P-value
+The p-value is the probability that something more extreme or equal to the null will occur. 
+
+(c) Correlation coefficient
+The correlation coefficient is a measure of the relationship between variables and quantifies their linear relationship.
+
+(d) Sum of squares of residuals
+Sum of the R values, or the values that quantify the distance that each data point varies from the regression estimate. Measures variation of data and strength of the model. 
+
+(e) Critical value
+A value that, when compared to the t-test value plays a role in accepting or rejecting the null. This value allows for statistical significance to be definitively determined. 
+
